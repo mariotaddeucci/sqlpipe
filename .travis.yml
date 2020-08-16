@@ -1,0 +1,21 @@
+language: python
+
+cache: pip
+
+python:
+  - '3.6'
+
+notifications:
+  email:
+    on_failure: never
+    on_pull_requests: never
+
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  on:
+    branch:
+      - master
+
+  user: ${PYPI_USERNAME}
+  password : ${PYPI_PASSWORD}
