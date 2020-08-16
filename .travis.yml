@@ -2,8 +2,12 @@ language: python
 
 cache: pip
 
-python:
-  - '3.6'
+script: skip
+
+# Build only master branch and pull-requests
+branches:
+  only:
+    - "master"
 
 notifications:
   email:
