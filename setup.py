@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='sqlpipe',
-    version='0.2',
+    version='0.2.1',
     description='A simple way to run multiple SQL script pipelines in parallel.',
     long_description=long_description,
     long_description_content_type="text/markdown",

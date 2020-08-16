@@ -86,7 +86,7 @@ class SqlPipeBuilder:
         search = path.join(directory, '**', '*.sql')
         for filename in iglob(search, recursive=True):
             with open(filename) as file:
-                dep = re.findall(r"/\*.*@parent=(.*).\*/", file.read())
+                dep = re.findall(r".*@parent=(.*).*", file.read())
 
             parent_id = dep[0] if dep else None
             task_id = filename.replace(directory, '')
