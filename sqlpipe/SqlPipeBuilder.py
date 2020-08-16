@@ -1,7 +1,9 @@
 import asyncio
 import asyncpg
+import aiomysql
 from glob import iglob
 from os import path
+from urllib.parse import urlparse
 import re
 
 
@@ -15,18 +17,36 @@ class SqlPipeBuilder:
 
     async def _pool(self):
         if self.__pool is None:
-            self.__pool = await asyncpg.create_pool(
-                dsn=self.connection,
-                min_size=1,
-                max_size=self.connections_limit
-            )
+            dbc = urlparse(self.connection)
+
+            if dbc.scheme.lower() in ['postgres', 'redshift', 'postgresql']:
+                self.__pool = await asyncpg.create_pool(
+                    user=dbc.username,
+                    password=dbc.password,
+                    database=dbc.path.lstrip('/'),
+                    host=dbc.hostname,
+                    port=dbc.port,
+                    dsn=self.connection,
+                    min_size=1,
+                    max_size=self.connections_limit
+                )
+            elif dbc.scheme.lower() in ['mysql']:
+                self.__pool = await aiomysql.create_pool(
+                    host=dbc.hostname,
+                    port=dbc.port,
+                    user=dbc.username,
+                    password=dbc.password,
+                    db=dbc.path.lstrip('/'),
+                    minsize=1,
+                    maxsize=self.connections_limit
+                )
+
         return self.__pool
 
     async def execute_sql(self, sql):
         pool = await self._pool()
-        con = await pool.acquire()
-        await con.execute(sql)
-        await pool.release(con)
+        async with pool.acquire() as con:
+            await con.execute(sql)
 
     async def __execute_task(self, task_id):
         task = self.tasks.get(task_id, None)
@@ -48,7 +68,7 @@ class SqlPipeBuilder:
         )
         await asyncio.gather(*stack)
 
-    async def __run(self, task_id=None):
+    async def async_execute(self, task_id=None):
         if task_id:
             await self.__execute_task(task_id)
         else:
@@ -81,4 +101,4 @@ class SqlPipeBuilder:
 
     def execute(self, task_id=None):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.__run(task_id))
+        loop.run_until_complete(self.async_execute(task_id))
