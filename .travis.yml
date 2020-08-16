@@ -4,10 +4,13 @@ cache: pip
 
 script: skip
 
-# Build only master branch and pull-requests
 branches:
   only:
     - "master"
+
+skip_commits:
+  files:
+    - setup.py
 
 notifications:
   email:
